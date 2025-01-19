@@ -7,9 +7,13 @@ spring:
         - id: user-service
           uri: lb://USER-SERVICE
           predicates:
-            - Path=/account/**, /authorize/**
+            - Path=/account/**
+        - id: book-service
+          uri: lb://BOOK-SERVICE
+          predicates:
+            - Path=/books/**
           filters:
-            - TestSecurityFilter
+            - BookServiceSecurityFilter
 
 server:
   port: 9090

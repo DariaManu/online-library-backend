@@ -7,6 +7,7 @@ import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -28,13 +29,14 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Component
-public class TestSecurityFilter extends AbstractGatewayFilterFactory<TestSecurityFilter.Config> {
+public class BookServiceSecurityFilter extends AbstractGatewayFilterFactory<BookServiceSecurityFilter.Config> {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public TestSecurityFilter() {
+    public BookServiceSecurityFilter() {
         super(Config.class);
     }
 
@@ -44,6 +46,8 @@ public class TestSecurityFilter extends AbstractGatewayFilterFactory<TestSecurit
             ServerHttpRequest request = exchange.getRequest();
             String path = request.getURI().getPath();
             System.out.println(path);
+            HttpMethod method = request.getMethod();
+            System.out.println(method);
             HttpHeaders httpHeaders = request.getHeaders();
             String token = httpHeaders.getFirst(HttpHeaders.AUTHORIZATION);
             System.out.println(token);
@@ -59,7 +63,8 @@ public class TestSecurityFilter extends AbstractGatewayFilterFactory<TestSecurit
             System.out.println(values[0]);
             System.out.println(values[1]);
 
-            if (config.getCheckForUserRole().contains(path)) {
+            if (checkIfPathMatchesPatternToCheck(method, path, config.getCheckForUserRole())) {
+                System.out.println("Authorize for user role access");
                 try {
                     HttpRequest req = HttpRequest.newBuilder()
                             .uri(new URI("http://localhost:8080/authorize/user"))
@@ -83,7 +88,8 @@ public class TestSecurityFilter extends AbstractGatewayFilterFactory<TestSecurit
                 } catch (URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
-            } else if (config.getCheckForAdminRole().contains(path)) {
+            } else if (checkIfPathMatchesPatternToCheck(method, path, config.getCheckForAdminRole())) {
+                System.out.println("Authorize for admin role access");
                 try {
                     HttpRequest req = HttpRequest.newBuilder()
                             .uri(new URI("http://localhost:8080/authorize/admin"))
@@ -107,7 +113,8 @@ public class TestSecurityFilter extends AbstractGatewayFilterFactory<TestSecurit
                 } catch (URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
-            } else if (config.getCheckForBothRoles().contains(path)) {
+            } else if (checkIfPathMatchesPatternToCheck(method, path, config.getCheckForBothRoles())) {
+                System.out.println("Authorize access for both roles");
                 try {
                     HttpRequest req = HttpRequest.newBuilder()
                             .uri(new URI("http://localhost:8080/authorize/all"))
@@ -137,6 +144,20 @@ public class TestSecurityFilter extends AbstractGatewayFilterFactory<TestSecurit
         }));
     }
 
+    private boolean checkIfPathMatchesPatternToCheck(HttpMethod method,
+                                                     String path,
+                                                     Map<HttpMethod, List<Pattern>> patternsToCheck) {
+        if (patternsToCheck.containsKey(method)) {
+            List<Pattern> pathsToMatch = patternsToCheck.get(method);
+            for (Pattern pathPattern: pathsToMatch) {
+                if (pathPattern.matcher(path).matches()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private Mono<Void> handleAuthorizationError(ServerWebExchange exchange, String message, HttpStatus httpStatus) {
         ServerHttpResponse response = exchange.getResponse();
         response.setStatusCode(httpStatus);
@@ -158,31 +179,43 @@ public class TestSecurityFilter extends AbstractGatewayFilterFactory<TestSecurit
     }
 
     public static class Config {
-        private List<String> checkForUserRole = List.of("/authorize/test1");
-        private List<String> checkForAdminRole = List.of("/authorize/test2");
-        private List<String> checkForBothRoles = List.of("/authorize/test3");
+        private Map<HttpMethod, List<Pattern>> checkForUserRole = new HashMap<>();
+        private Map<HttpMethod, List<Pattern>> checkForAdminRole = Map.ofEntries(
+                Map.entry(HttpMethod.POST, List.of(
+                        Pattern.compile("/books"),
+                        Pattern.compile("/books/[0-9]+/coverImage"),
+                        Pattern.compile("/books/[0-9]+/resource")
+                ))
+        );
+        private Map<HttpMethod, List<Pattern>> checkForBothRoles = Map.ofEntries(
+                Map.entry(HttpMethod.GET, List.of(
+                        Pattern.compile("/books"),
+                        Pattern.compile("/books/[0-9]+/coverImage"),
+                        Pattern.compile("/books/[0-9]+/resource")
+                ))
+        );
 
-        public List<String> getCheckForUserRole() {
+        public Map<HttpMethod, List<Pattern>> getCheckForUserRole() {
             return checkForUserRole;
         }
 
-        public List<String> getCheckForAdminRole() {
+        public Map<HttpMethod, List<Pattern>> getCheckForAdminRole() {
             return checkForAdminRole;
         }
 
-        public List<String> getCheckForBothRoles() {
+        public Map<HttpMethod, List<Pattern>> getCheckForBothRoles() {
             return checkForBothRoles;
         }
 
-        public void setCheckForUserRole(List<String> checkForUserRole) {
+        public void setCheckForUserRole(Map<HttpMethod, List<Pattern>> checkForUserRole) {
             this.checkForUserRole = checkForUserRole;
         }
 
-        public void setCheckForAdminRole(List<String> checkForAdminRole) {
+        public void setCheckForAdminRole(Map<HttpMethod, List<Pattern>> checkForAdminRole) {
             this.checkForAdminRole = checkForAdminRole;
         }
 
-        public void setCheckForBothRoles(List<String> checkForBothRoles) {
+        public void setCheckForBothRoles(Map<HttpMethod, List<Pattern>> checkForBothRoles) {
             this.checkForBothRoles = checkForBothRoles;
         }
     }
