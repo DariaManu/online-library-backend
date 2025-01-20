@@ -38,7 +38,7 @@ public class AuthenticationService {
 
     public AccountDetailsResponse login(final String email, final String password) {
         if (!accountDetailsRepository.existsByEmail(email)) {
-            throw new EmailNotFoundException(email);
+            throw new EmailNotFoundException("There is no account with this email");
         }
         Authentication authentication = authenticationManager.authenticate
                 (new UsernamePasswordAuthenticationToken(email, password));

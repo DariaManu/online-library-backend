@@ -8,12 +8,35 @@ spring:
           uri: lb://USER-SERVICE
           predicates:
             - Path=/account/**
+          metadata:
+            cors:
+              allowedOrigins: "*"
+              allowedMethods: "*"
+              allowedHeaders: "*"
         - id: book-service
           uri: lb://BOOK-SERVICE
           predicates:
             - Path=/books/**
           filters:
             - BookServiceSecurityFilter
+          metadata:
+            cors:
+              allowedOrigins: "*"
+              allowedMethods: "*"
+              allowedHeaders: "*"
+      globalcors:
+        cors-configurations:
+          '[**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            exposedHeaders:
+              - "*"
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
 server:
   port: 9090
