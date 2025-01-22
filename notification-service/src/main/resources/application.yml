@@ -3,3 +3,14 @@ spring:
     name: notification-service
 server:
   port: 9095
+
+# rabbitMQ configuration
+newBookAdded:
+  exchange: new_book_added_exchange
+  queue: new_book_added_queue
+  anything:
+    routing-key: new_book.*
+
+newBook:
+  added:
+    key: new_book.added

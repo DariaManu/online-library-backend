@@ -1,5 +1,7 @@
 package com.example.bookservice.service;
 
+import com.example.bookservice.messaging.EventDispatcher;
+import com.example.bookservice.messaging.event.NewBookAddedEvent;
 import com.example.bookservice.model.Book;
 import com.example.bookservice.model.BookCoverImage;
 import com.example.bookservice.model.BookResource;
@@ -27,6 +29,8 @@ public class BookService {
     private final BookCoverImageContentStore bookCoverImageContentStore;
     private final BookResourceRepository bookResourceRepository;
     private final BookResourceContentStore bookResourceContentStore;
+
+    private final EventDispatcher eventDispatcher;
 
     private static final int STREAM_BUFFER_SIZE = 1024 * 1024;
 
@@ -73,6 +77,13 @@ public class BookService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        if (checkIfNewBookAddedEvent(bookId)) {
+            Book book = bookRepository.findById(bookId).get();
+            eventDispatcher.send(new NewBookAddedEvent(
+                    "New Book Added", book.getBookId(), book.getTitle(), book.getAuthor(), book.getGenre()
+            ));
+        }
     }
 
     @Transactional
@@ -104,6 +115,23 @@ public class BookService {
             bookResourceRepository.save(bookResource);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+
+        if (checkIfNewBookAddedEvent(bookId)) {
+            Book book = bookRepository.findById(bookId).get();
+            eventDispatcher.send(new NewBookAddedEvent(
+                    "New Book Added", book.getBookId(), book.getTitle(), book.getAuthor(), book.getGenre()
+            ));
+        }
+    }
+
+    private boolean checkIfNewBookAddedEvent(final Long bookId) {
+        BookCoverImage bookCoverImage = bookCoverImageRepository.findByBookId(bookId).get();
+        BookResource bookResource = bookResourceRepository.findByBookId(bookId).get();
+        if (bookCoverImage.getCoverImageContentId() != null & bookResource.getResourceContentId() != null) {
+            return true;
+        } else {
+            return false;
         }
     }
 
