@@ -1,6 +1,9 @@
 spring:
   application:
     name: notification-service
+  # Kafka configuration
+  kafka:
+    bootstrap-servers: localhost:9092
 server:
   port: 9095
 

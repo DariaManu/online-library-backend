@@ -19,6 +19,9 @@ spring:
   content:
     fs:
       filesystem-root: /Users/daria/Facultate/Master/An2/Sem1/service-oriented-architectures/olb-data/files
+  #Kafka configuration
+  kafka:
+    bootstrap-servers: localhost:9092
 
 server:
   port: 8085

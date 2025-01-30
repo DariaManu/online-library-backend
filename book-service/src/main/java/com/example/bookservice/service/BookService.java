@@ -10,6 +10,7 @@ import com.example.bookservice.service.dto.BookFileDTO;
 import com.example.bookservice.service.exception.MissingFileException;
 import com.example.bookservice.service.exception.MissingObjectException;
 import lombok.AllArgsConstructor;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,6 +32,7 @@ public class BookService {
     private final BookResourceContentStore bookResourceContentStore;
 
     private final EventDispatcher eventDispatcher;
+    private final KafkaTemplate<String, Book> kafkaTemplate;
 
     private static final int STREAM_BUFFER_SIZE = 1024 * 1024;
 
@@ -190,6 +192,9 @@ public class BookService {
                 bufferedOutput.flush();
             }
         };
+
+        Book book = bookRepository.findById(bookId).orElseThrow(MissingObjectException::new);
+        kafkaTemplate.send("book", book);
 
         return new BookFileDTO(mimeType, streamingResponseBody);
     }
