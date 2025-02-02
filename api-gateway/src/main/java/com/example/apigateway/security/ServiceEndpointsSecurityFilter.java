@@ -32,11 +32,11 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 @Component
-public class BookServiceSecurityFilter extends AbstractGatewayFilterFactory<BookServiceSecurityFilter.Config> {
+public class ServiceEndpointsSecurityFilter extends AbstractGatewayFilterFactory<ServiceEndpointsSecurityFilter.Config> {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public BookServiceSecurityFilter() {
+    public ServiceEndpointsSecurityFilter() {
         super(Config.class);
     }
 
@@ -185,6 +185,9 @@ public class BookServiceSecurityFilter extends AbstractGatewayFilterFactory<Book
                         Pattern.compile("/books"),
                         Pattern.compile("/books/[0-9]+/coverImage"),
                         Pattern.compile("/books/[0-9]+/resource")
+                )),
+                Map.entry(HttpMethod.GET, List.of(
+                        Pattern.compile("/statistics/genre")
                 ))
         );
         private Map<HttpMethod, List<Pattern>> checkForBothRoles = Map.ofEntries(

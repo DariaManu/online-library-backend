@@ -18,7 +18,18 @@ spring:
           predicates:
             - Path=/books/**
           filters:
-            - BookServiceSecurityFilter
+            - ServiceEndpointsSecurityFilter
+          metadata:
+            cors:
+              allowedOrigins: "*"
+              allowedMethods: "*"
+              allowedHeaders: "*"
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/statistics/genre
+          filters:
+            - ServiceEndpointsSecurityFilter
           metadata:
             cors:
               allowedOrigins: "*"

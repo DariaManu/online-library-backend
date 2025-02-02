@@ -29,6 +29,11 @@ newBook:
   added:
     key: new_book.added
 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+
 aws:
   lambda:
     function-url: ${AWS_LAMBDA_FUNCTION_URL}
