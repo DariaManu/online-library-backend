@@ -1,6 +1,17 @@
 spring:
   application:
     name: notification-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/olb-notification-service
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
   # Kafka configuration
   kafka:
     bootstrap-servers: localhost:9092
@@ -17,3 +28,7 @@ newBookAdded:
 newBook:
   added:
     key: new_book.added
+
+aws:
+  lambda:
+    function-url: ${AWS_LAMBDA_FUNCTION_URL}
