@@ -11,11 +11,11 @@
 
     <appender name="FILE"
               class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>/Users/daria/Facultate/Master/An2/Sem1/service-oriented-architectures/olb-data/kafka-logs/olb-kafka.log</file>
+        <file>${LOGS_PATH}/olb-kafka.log</file>
         <rollingPolicy
                 class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>
-                /Users/daria/Facultate/Master/An2/Sem1/service-oriented-architectures/olb-data/kafka-logs/olb-kafka-%d{yyyy-MM-dd}.%i.log
+                ${LOGS_PATH}/olb-kafka-%d{yyyy-MM-dd}.%i.log
             </fileNamePattern>
             <maxFileSize>10MB</maxFileSize>
             <maxHistory>100000</maxHistory>

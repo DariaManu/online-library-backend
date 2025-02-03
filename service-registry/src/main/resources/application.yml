@@ -3,7 +3,7 @@ spring:
     name: service-registry
 
 server:
-  port: 8761
+  port: ${SERVER_PORT}
 
 eureka:
   instance:

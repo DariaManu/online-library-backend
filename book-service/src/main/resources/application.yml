@@ -2,9 +2,9 @@ spring:
   application:
     name: book-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/olb-book-service
-    username: postgres
-    password: postgres
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -18,18 +18,18 @@ spring:
       max-file-size: 10MB
   content:
     fs:
-      filesystem-root: /Users/daria/Facultate/Master/An2/Sem1/service-oriented-architectures/olb-data/files
+      filesystem-root: ${CONTENT_PATH}
   #Kafka configuration
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_SERVER}
 
 server:
-  port: 8085
+  port: ${SERVER_PORT}
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_URI}
 
 # rabbitMQ configuration
 newBookAdded:

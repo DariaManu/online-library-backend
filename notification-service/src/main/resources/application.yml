@@ -2,9 +2,9 @@ spring:
   application:
     name: notification-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/olb-notification-service
-    username: postgres
-    password: postgres
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -14,9 +14,9 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   # Kafka configuration
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_SERVER}
 server:
-  port: 9095
+  port: ${SERVER_PORT}
 
 # rabbitMQ configuration
 newBookAdded:
@@ -32,7 +32,7 @@ newBook:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_URI}
 
 aws:
   lambda:

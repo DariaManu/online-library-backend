@@ -3,6 +3,7 @@ package com.example.apigateway.security;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -36,6 +37,9 @@ public class ServiceEndpointsSecurityFilter extends AbstractGatewayFilterFactory
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Value("${authorization.uri}")
+    private String authorizationUri;
+
     public ServiceEndpointsSecurityFilter() {
         super(Config.class);
     }
@@ -67,7 +71,7 @@ public class ServiceEndpointsSecurityFilter extends AbstractGatewayFilterFactory
                 System.out.println("Authorize for user role access");
                 try {
                     HttpRequest req = HttpRequest.newBuilder()
-                            .uri(new URI("http://localhost:8080/authorize/user"))
+                            .uri(new URI(authorizationUri + "/authorize/user"))
                             .header("Authorization", token)
                             .GET()
                             .build();
@@ -92,7 +96,7 @@ public class ServiceEndpointsSecurityFilter extends AbstractGatewayFilterFactory
                 System.out.println("Authorize for admin role access");
                 try {
                     HttpRequest req = HttpRequest.newBuilder()
-                            .uri(new URI("http://localhost:8080/authorize/admin"))
+                            .uri(new URI(authorizationUri + "/authorize/admin"))
                             .header("Authorization", token)
                             .GET()
                             .build();
@@ -117,7 +121,7 @@ public class ServiceEndpointsSecurityFilter extends AbstractGatewayFilterFactory
                 System.out.println("Authorize access for both roles");
                 try {
                     HttpRequest req = HttpRequest.newBuilder()
-                            .uri(new URI("http://localhost:8080/authorize/all"))
+                            .uri(new URI(authorizationUri + "/authorize/all"))
                             .header("Authorization", token)
                             .GET()
                             .build();

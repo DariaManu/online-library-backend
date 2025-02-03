@@ -50,9 +50,12 @@ spring:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
 server:
-  port: 9090
+  port: ${SERVER_PORT}
 
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_URI}
+
+authorization:
+  uri: ${AUTHORIZATION_URI}
