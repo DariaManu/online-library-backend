@@ -1,0 +1,188 @@
+services:
+  olb-postgres:
+    image: postgres
+    container_name: olb-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  olb-rabbitmq:
+    image: rabbitmq:4.0-management
+    container_name: olb-rabbitmq
+    ports:
+      - "15672:15672"
+
+  olb-kafka:
+    image: apache/kafka-native
+    container_name: olb-kafka
+    environment:
+      KAFKA_LISTENERS: CONTROLLER://localhost:29092,DOCKER://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: DOCKER://olb-kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  olb-service-registry:
+    image: dariamanu/olb-service-registry
+    container_name: olb-service-registry
+    environment:
+      - SERVER_PORT=8761
+    ports:
+      - "8761:8761"
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+
+  olb-user-service1:
+    image: dariamanu/olb-user-service
+    container_name: olb-user-service1
+    environment:
+      - DB_URL=jdbc:postgresql://olb-postgres:5432/olb-user-service
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - SERVER_PORT=8080
+      - EUREKA_URI=http://olb-service-registry:8761/eureka
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+      - olb-service-registry
+
+  olb-user-service2:
+    image: dariamanu/olb-user-service
+    container_name: olb-user-service2
+    environment:
+      - DB_URL=jdbc:postgresql://olb-postgres:5432/olb-user-service
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - SERVER_PORT=8081
+      - EUREKA_URI=http://olb-service-registry:8761/eureka
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+      - olb-service-registry
+      - olb-user-service1
+
+  olb-book-service:
+    image: dariamanu/olb-book-service
+    container_name: olb-book-service
+    environment:
+      - DB_URL=jdbc:postgresql://olb-postgres:5432/olb-book-service
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - CONTENT_PATH=/var/lib/olb/content
+      - EUREKA_URI=http://olb-service-registry:8761/eureka
+      - KAFKA_SERVER=DOCKER://olb-kafka:9092
+      - SERVER_PORT=8085
+      - RABBITMQ_HOST=olb-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+      - olb-service-registry
+      - olb-user-service1
+      - olb-user-service2
+    volumes:
+      - contentdata:/var/lib/olb/content
+
+  olb-notification-service:
+    image: dariamanu/olb-notification-service
+    container_name: olb-notification-service
+    environment:
+      - DB_URL=jdbc:postgresql://olb-postgres:5432/olb-notification-service
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - LOGS_PATH=/var/lib/olb/logs
+      - EUREKA_URI=http://olb-service-registry:8761/eureka
+      - KAFKA_SERVER=DOCKER://olb-kafka:9092
+      - SERVER_PORT=8090
+      - AWS_LAMBDA_FUNCTION_URL=
+      - RABBITMQ_HOST=olb-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+    ports:
+      - "8090:8090"
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+      - olb-service-registry
+      - olb-user-service1
+      - olb-user-service2
+      - olb-book-service
+    volumes:
+      - logdata:/var/lib/olb/logs
+
+  olb-api-gateway:
+    image: dariamanu/olb-api-gateway
+    container_name: olb-api-gateway
+    environment:
+      - AUTHORIZATION_URI=http://olb-user-service1:8080
+      - EUREKA_URI=http://olb-service-registry:8761/eureka
+      - SERVER_PORT=9090
+    ports:
+      - "9090:9090"
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+      - olb-service-registry
+      - olb-user-service1
+      - olb-user-service2
+      - olb-book-service
+      - olb-notification-service
+
+  ol-navbar-component:
+    image: dariamanu/navbar-component
+    container_name: ol-navbar-component
+    ports:
+      - "3001:3001"
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+      - olb-service-registry
+      - olb-user-service1
+      - olb-user-service2
+      - olb-book-service
+      - olb-notification-service
+      - olb-api-gateway
+
+  ol-frontend:
+    image: dariamanu/online-library-frontend
+    container_name: ol-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - olb-postgres
+      - olb-rabbitmq
+      - olb-kafka
+      - olb-service-registry
+      - olb-user-service1
+      - olb-user-service2
+      - olb-book-service
+      - olb-notification-service
+      - olb-api-gateway
+      - ol-navbar-component
+
+
+
+volumes:
+  pgdata:
+  contentdata:
+  logdata:
